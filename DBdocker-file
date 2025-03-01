@@ -1,0 +1,17 @@
+# Use the official MySQL image
+FROM mysql:8.0
+
+# Environment variables for MySQL
+ENV MYSQL_ROOT_PASSWORD=root
+ENV MYSQL_DATABASE=ecommerce_ceramic_cups
+ENV MYSQL_USER=admin
+ENV MYSQL_PASSWORD=admin123
+
+# Copy the SQL script to the container
+COPY ecommerce_ceramic_cups.sql /docker-entrypoint-initdb.d/
+
+# Create volume directory
+VOLUME /var/lib/mysql
+
+# Expose MySQL port
+EXPOSE 3306

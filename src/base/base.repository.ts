@@ -1,60 +1,84 @@
-import { Logger, Injectable, BadGatewayException } from '@nestjs/common';
-import { FilterQuery, Model, QueryOptions } from 'mongoose';
-import { BaseDocument } from './base.schema';
+import {
+  Logger,
+  Injectable,
+  BadGatewayException,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  Repository,
+  FindOptionsWhere,
+  FindManyOptions,
+  DeepPartial,
+} from 'typeorm';
+import { Base } from './base.schema';
+
 @Injectable()
-export class BaseRepository<T extends BaseDocument> {
+export class BaseRepository<T extends Base> {
   private logger = new Logger(this.constructor.name);
 
-  constructor(private readonly container: Model<T>) { }
+  constructor(private readonly repository: Repository<T>) {}
 
-  async create(item): Promise<T> {
+  async create(item: DeepPartial<T>): Promise<T> {
     try {
-      const newItem = new this.container(item);
-      await newItem.save();
-      return newItem;
+      const newItem = this.repository.create(item);
+      const savedItem = await this.repository.save(newItem);
+      return savedItem;
     } catch (error) {
       this.logger.error(error);
-      throw new BadGatewayException(error.message);
+      throw new BadGatewayException(error?.message || 'Error creating item');
     }
   }
 
-  async updateOne(id: string, item): Promise<T | any> {
+  async updateOne(id: number, item: DeepPartial<T>): Promise<T> {
     try {
-      await this.container.updateOne({ _id: id }, item).exec();
-      return await this.container.findById(id);
+      await this.repository.update(id, item as any);
+      const updated = await this.findById(id);
+      if (!updated) {
+        throw new NotFoundException(`Item with id ${id} not found`);
+      }
+      return updated;
     } catch (error) {
       this.logger.error(error);
-      throw new BadGatewayException(error.message);
+      throw new BadGatewayException(error?.message || 'Error updating item');
     }
   }
 
-  async remove(id: string) {
+  async remove(id: number): Promise<{ message: string }> {
     try {
-      await this.container.findByIdAndDelete(id);
+      const result = await this.repository.delete(id);
+      if (result.affected === 0) {
+        throw new NotFoundException(`Item with id ${id} not found`);
+      }
       return {
         message: 'Item with id: ' + id + ' deleted',
       };
     } catch (error) {
       this.logger.error(error);
-      throw new BadGatewayException(error.message);
+      throw new BadGatewayException(error?.message || 'Error deleting item');
     }
   }
 
-  async findAll(filter?: FilterQuery<T>, options?: QueryOptions): Promise<T[]> {
+  async findAll(options?: FindManyOptions<T>): Promise<T[]> {
     try {
-      return await this.container.find(filter, null, options).exec();
+      return await this.repository.find(options);
     } catch (error) {
       this.logger.error(error);
-      throw new BadGatewayException(error.message);
+      throw new BadGatewayException(error?.message || 'Error finding items');
     }
   }
 
-  async findById(id: string): Promise<T> {
+  async findById(id: number): Promise<T> {
     try {
-      return await this.container.findById(id);
+      const item = await this.repository.findOne({
+        where: { id: id } as unknown as FindOptionsWhere<T>,
+      });
+      if (!item) {
+        throw new NotFoundException(`Item with id ${id} not found`);
+      }
+      return item;
     } catch (error) {
       this.logger.error(error);
-      throw new BadGatewayException(error.message);
+      throw new BadGatewayException(error?.message || 'Error finding item');
     }
   }
 }

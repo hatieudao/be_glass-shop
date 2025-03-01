@@ -1,4 +1,4 @@
-import mongo from './mongo';
+import mysql from './mysql';
 import _default from './default';
 
-export default [mongo, _default];
+export default [mysql, _default];

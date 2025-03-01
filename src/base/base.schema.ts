@@ -1,19 +1,12 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { CreateDateColumn, PrimaryGeneratedColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 
-export type BaseDocument = Base & Document & { _id: string };
-@Schema()
-export class Base {
-  @Prop()
-  @ApiProperty({ description: 'Created day', type: String, default: Date.now })
-  createdAt: Date;
+export abstract class Base {
+  @PrimaryGeneratedColumn()
+  @ApiProperty({ description: 'Primary key', type: Number })
+  id: number;
 
-  @Prop()
-  @ApiProperty({ description: 'Updated day', type: String, default: null })
-  updatedAt: Date;
-
-  @Prop()
-  @ApiProperty({ description: 'Deleted day', type: String, default: null })
-  deletedAt: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  @ApiProperty({ description: 'Created date', type: Date })
+  created_at: Date;
 }
-export const BaseSchema = SchemaFactory.createForClass(Base);
