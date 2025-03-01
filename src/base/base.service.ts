@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { BaseDocument } from './base.schema';
+import { BaseSchema } from './base.schema';
 import { BaseRepository } from './base.repository';
-import { IBaseService } from './IBase.service';
+import { IBaseService } from './ibase.service';
 
 @Injectable()
-export class BaseService<T extends BaseDocument> implements IBaseService<T> {
-  constructor(private readonly genericRepository: BaseRepository<T>) { }
+export class BaseService<T extends BaseSchema> implements IBaseService<T> {
+  constructor(private readonly genericRepository: BaseRepository<T>) {}
 
   async create(model): Promise<T> {
     return this.genericRepository.create(model);

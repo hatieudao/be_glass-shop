@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
-import { Order } from '../order/order.schema';
-import { ProductType } from '../product-type/product-type.schema';
+import { Order } from '../orders/order.schema';
+import { ProductType } from '../product-types/product-type.schema';
 
 export interface IOrderItem {
   id: number;

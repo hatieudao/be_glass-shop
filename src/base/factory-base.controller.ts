@@ -11,7 +11,7 @@ import {
 import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { AbstractValidationPipe } from './abstract-validation.pipe';
 import { IBaseController } from './ibase.controller';
-import { IBaseService } from './IBase.service';
+import { IBaseService } from './ibase.service';
 
 export function FactoryBaseController<T, C, U>(
   createDto: Type<C>,
@@ -27,7 +27,7 @@ export function FactoryBaseController<T, C, U>(
   );
 
   class CRUD<T, C, U> implements IBaseController<T, C, U> {
-    constructor(protected readonly iBaseService: IBaseService<T>) { }
+    constructor(protected readonly iBaseService: IBaseService<T>) {}
     @Get()
     @ApiResponse({ status: 200, description: 'Ok' })
     async findAll(filter): Promise<T[]> {

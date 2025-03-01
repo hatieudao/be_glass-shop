@@ -2,21 +2,40 @@ import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtRefreshAuthGuard } from '../../common/guards/jwt-refresh-auth.guard';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { Controller, Post, UseGuards, Request, Response, Get, Body, Query, Headers } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  UseGuards,
+  Request,
+  Response,
+  Get,
+  Body,
+  Query,
+  Headers,
+  BadRequestException,
+} from '@nestjs/common';
 import { REDIRECTPAGE } from '../../constant';
 import { AuthService } from './authentication.service';
 import { GetCurrentUserId } from 'src/common/decorators/get-current-user-id.decorator';
 import { ApiTags } from '@nestjs/swagger';
+
+interface TokenPayload {
+  exp?: number;
+  email?: string;
+  sub?: string;
+}
+
 @Controller('auth')
 @ApiTags('auth')
 export class AuthController {
-  constructor(private readonly authservice: AuthService,
-    private readonly config: ConfigService) {
-  }
+  constructor(
+    private readonly authservice: AuthService,
+    private readonly config: ConfigService,
+  ) {}
   @UseGuards(JwtAuthGuard)
   @Get('protected')
   getHello(@Request() req): any {
-    return 'jwt passed !'
+    return 'jwt passed !';
   }
 
   @Post('local/signin')
@@ -25,13 +44,11 @@ export class AuthController {
     if (successLoginUser) {
       res.set({
         'access-token': successLoginUser.access_token,
-        'refresh-token': successLoginUser.refresh_token
-      })
-      return res.status(200).send(
-        successLoginUser.userInfor
-      );
+        'refresh-token': successLoginUser.refresh_token,
+      });
+      return res.status(200).send(successLoginUser.userInfor);
     }
-    return res.status(500).send("Can not register new user")
+    return res.status(500).send('Can not register new user');
   }
 
   @Post('local/signup')
@@ -41,42 +58,57 @@ export class AuthController {
       res.set({
         'access-token': registedNewUser.access_token,
         'refresh-token': registedNewUser.refresh_token,
-      })
-      return res.status(200).send(
-        registedNewUser.userInfor
-      );
+      });
+      return res.status(200).send(registedNewUser.userInfor);
     }
-    return res.status(500).send("Can not register new user")
+    return res.status(500).send('Can not register new user');
   }
 
   @UseGuards(JwtRefreshAuthGuard)
   @Post('refresh')
-  async refreshAccessToken(@Response() res: any, @Request() req: any): Promise<any> {
+  async refreshAccessToken(
+    @Response() res: any,
+    @Request() req: any,
+  ): Promise<any> {
     const refreshToken = this.authservice.getTokenFromRequestHeader(req);
     const payload = this.authservice.tokenToPayload(refreshToken);
-    const refreshResult = await this.authservice.refreshAccessToken(refreshToken, payload.sub)
+    if (!payload.sub) {
+      throw new BadRequestException('Invalid token payload');
+    }
+    const refreshResult = await this.authservice.refreshAccessToken(
+      refreshToken,
+      payload.sub,
+    );
     if (refreshResult) {
       res.set({
         'access-token': refreshResult.access_token,
-      })
+      });
       return res.status(200).send();
     }
-    return res.status(500).send("Can not register new user")
+    return res.status(500).send('Can not register new user');
   }
 
   @Get('google/login')
   @UseGuards(AuthGuard('google'))
-  async googleLogin(@Response() res: any, @Request() req: any, @Headers() header: any): Promise<any> {
+  async googleLogin(
+    @Response() res: any,
+    @Request() req: any,
+    @Headers() header: any,
+  ): Promise<any> {
     const clientSide = header.origin;
     const authInfo = await this.authservice.loginWithThirdService(req);
     if (authInfo) {
       res.set({
         'access-token': authInfo.access_token,
-        'refresh-token': authInfo.refresh_token
-      })
-      return res.status(200).redirect(`${this.config.get<string>(REDIRECTPAGE)}redirectPage/${authInfo.access_token}/${authInfo.refresh_token}`)
+        'refresh-token': authInfo.refresh_token,
+      });
+      return res
+        .status(200)
+        .redirect(
+          `${this.config.get<string>(REDIRECTPAGE)}redirectPage/${authInfo.access_token}/${authInfo.refresh_token}`,
+        );
     }
-    return res.status(500).send("Can not login with gooogle")
+    return res.status(500).send('Can not login with gooogle');
   }
 
   @Get('sendActivateEmail')
@@ -84,25 +116,39 @@ export class AuthController {
   async sendActivateEmail(@Request() req: any): Promise<any> {
     const accessToken = this.authservice.getTokenFromRequestHeader(req);
     const payload = this.authservice.tokenToPayload(accessToken);
-    return await this.authservice.sentActivateAccountEmail(payload);
+    if (!payload.email || !payload.sub) {
+      throw new BadRequestException('Invalid token payload');
+    }
+    return await this.authservice.sentActivateAccountEmail({
+      email: payload.email,
+      sub: payload.sub,
+    });
   }
 
   @Post('sendInviteGroupEmail')
   @UseGuards(JwtAuthGuard)
-  async sendInviteGroupEmail(@Request() req: any): Promise<any> {
+  async sendInviteGroupEmail(
+    @Request() req: any,
+    @Body() body: { email: string; invitationLink: string },
+  ): Promise<any> {
     const accessToken = this.authservice.getTokenFromRequestHeader(req);
     const payload = this.authservice.tokenToPayload(accessToken);
-    const { email, invitationLink } = req.body;
-    return await this.authservice.sentInvitationGroupEmail(payload, email, invitationLink);
+    if (!payload.email) {
+      throw new BadRequestException('Invalid token payload');
+    }
+    return await this.authservice.sentInvitationGroupEmail(
+      { email: payload.email },
+      body.email,
+      body.invitationLink,
+    );
   }
 
   @Get('activateAccount')
   async activateAccount(@Request() req: any, @Query() query): Promise<any> {
     const result = await this.authservice.activateUser(query);
     if (result) {
-      return "Your account has been activated!";
-    }
-    else return result;
+      return 'Your account has been activated!';
+    } else return result;
   }
   @Get('/current-user')
   @UseGuards(JwtAuthGuard)

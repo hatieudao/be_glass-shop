@@ -1,5 +1,5 @@
 CREATE TABLE `Customers` (
-  `id` INT PRIMARY KEY AUTO_INCREMENT,
+  `id` UUID PRIMARY KEY DEFAULT (UUID()),
   `name` VARCHAR(255),
   `email` VARCHAR(255) UNIQUE,
   `password_hash` VARCHAR(255),
@@ -8,15 +8,15 @@ CREATE TABLE `Customers` (
 );
 
 CREATE TABLE `Products` (
-  `id` INT PRIMARY KEY AUTO_INCREMENT,
+  `id` UUID PRIMARY KEY DEFAULT (UUID()),
   `name` VARCHAR(255),
   `description` TEXT,
   `created_at` TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
 );
 
 CREATE TABLE `ProductTypes` (
-  `id` INT PRIMARY KEY AUTO_INCREMENT,
-  `product_id` INT,
+  `id` UUID PRIMARY KEY DEFAULT (UUID()),
+  `product_id` UUID,
   `name` VARCHAR(255),
   `description` TEXT,
   `price` DECIMAL(10,2),
@@ -26,17 +26,17 @@ CREATE TABLE `ProductTypes` (
 );
 
 CREATE TABLE `Orders` (
-  `id` INT PRIMARY KEY AUTO_INCREMENT,
-  `customer_id` INT,
+  `id` UUID PRIMARY KEY DEFAULT (UUID()),
+  `customer_id` UUID,
   `status` ENUM('pending','completed','canceled') DEFAULT 'pending',
   `total_price` DECIMAL(10,2),
   `created_at` TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
 );
 
 CREATE TABLE `OrderItems` (
-  `id` INT PRIMARY KEY AUTO_INCREMENT,
-  `order_id` INT,
-  `product_type_id` INT,
+  `id` UUID PRIMARY KEY DEFAULT (UUID()),
+  `order_id` UUID,
+  `product_type_id` UUID,
   `quantity` INT,
   `price` DECIMAL(10,2)
 );
@@ -68,13 +68,7 @@ INSERT INTO Products (name, description) VALUES
 
 -- Insert product types (at least 2 per product)
 INSERT INTO ProductTypes (product_id, name, description, price, stock, image_url) VALUES
-(1, 'Standard Size', '250ml classic white ceramic cup.', 10.99, 50, 'images/white_cup_standard.jpg'),
-(1, 'Large Size', '350ml classic white ceramic cup.', 12.99, 30, 'images/white_cup_large.jpg'),
-(2, 'Small Size', '200ml vintage floral ceramic cup.', 9.99, 40, 'images/floral_cup_small.jpg'),
-(2, 'Standard Size', '300ml vintage floral ceramic cup.', 11.99, 35, 'images/floral_cup_standard.jpg'),
-(3, 'Matte Finish', '250ml matte black ceramic cup.', 13.99, 25, 'images/black_cup_matte.jpg'),
-(3, 'Glossy Finish', '250ml glossy black ceramic cup.', 13.99, 25, 'images/black_cup_glossy.jpg'),
-(4, 'Handmade Variant 1', 'Handmade 280ml ceramic cup.', 14.99, 20, 'images/handmade_cup_1.jpg'),
-(4, 'Handmade Variant 2', 'Handmade 350ml ceramic cup.', 16.99, 15, 'images/handmade_cup_2.jpg'),
-(5, 'Standard Blue', '250ml minimalist blue ceramic cup.', 11.99, 30, 'images/blue_cup_standard.jpg'),
-(5, 'Large Blue', '350ml minimalist blue ceramic cup.', 13.99, 20, 'images/blue_cup_large.jpg');
+((SELECT id FROM Products LIMIT 1 OFFSET 0), 'Standard Size', '250ml classic white ceramic cup.', 10.99, 50, 'images/white_cup_standard.jpg'),
+((SELECT id FROM Products LIMIT 1 OFFSET 0), 'Large Size', '350ml classic white ceramic cup.', 12.99, 30, 'images/white_cup_large.jpg'),
+((SELECT id FROM Products LIMIT 1 OFFSET 1), 'Small Size', '200ml vintage floral ceramic cup.', 9.99, 40, 'images/floral_cup_small.jpg'),
+((SELECT id FROM Products LIMIT 1 OFFSET 1), 'Standard Size', '300ml vintage floral ceramic cup.', 11.99, 35, 'images/floral_cup_standard.jpg');

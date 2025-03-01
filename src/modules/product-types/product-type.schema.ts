@@ -6,8 +6,8 @@ import {
   ManyToOne,
   OneToMany,
 } from 'typeorm';
-import { Product } from '../product/product.schema';
-import { OrderItem } from '../order-item/order-item.schema';
+import { Product } from '../products/product.schema';
+import { OrderItem } from '../order-items/order-item.schema';
 
 export interface IProductType {
   id: number;

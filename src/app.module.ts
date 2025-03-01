@@ -4,6 +4,14 @@ import { AppService } from './app.service';
 import { AuthModule } from './modules/authentication/authentication.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import {
+  MYSQL_DATABASE,
+  MYSQL_HOST,
+  MYSQL_PASSWORD,
+  MYSQL_PORT,
+  MYSQL_USER,
+} from './constant';
+import configuration from './config/configuration';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -21,7 +29,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         username: configService.get(MYSQL_USER),
         password: configService.get(MYSQL_PASSWORD),
         database: configService.get(MYSQL_DATABASE),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        entities: [__dirname + '/**/*.schema{.ts,.js}'],
         synchronize: false,
       }),
     }),

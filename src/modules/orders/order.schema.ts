@@ -6,8 +6,8 @@ import {
   ManyToOne,
   OneToMany,
 } from 'typeorm';
-import { Customer } from '../customer/customer.schema';
-import { OrderItem } from '../order-item/order-item.schema';
+import { Customer } from '../authentication/customers/schema/customer.schema';
+import { OrderItem } from '../order-items/order-item.schema';
 
 export enum OrderStatus {
   PENDING = 'pending',

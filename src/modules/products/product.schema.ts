@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { ProductType } from '../product-type/product-type.schema';
+import { ProductType } from '../product-types/product-type.schema';
 
 export interface IProduct {
   id: number;

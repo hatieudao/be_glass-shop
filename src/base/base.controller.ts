@@ -1,6 +1,6 @@
 import { BaseUpdateDto } from './dto/base-update.dto';
 import { BaseCreateDto } from './dto/base-create.dto';
-import { BaseDocument } from './base.schema';
+import { BaseSchema } from './base.schema';
 import {
   Get,
   Post,
@@ -11,17 +11,14 @@ import {
   Controller,
 } from '@nestjs/common';
 import { ApiBody, ApiResponse } from '@nestjs/swagger';
-import { IBaseService } from './IBase.service';
 import { IBaseController } from './ibase.controller';
+import { IBaseService } from './ibase.service';
 
 @Controller()
-export class BaseController<
-  T extends BaseDocument,
-  BaseCreateDto,
-  BaseUpdateDto,
-> implements IBaseController<T, BaseCreateDto, BaseUpdateDto>
+export class BaseController<T extends BaseSchema, BaseCreateDto, BaseUpdateDto>
+  implements IBaseController<T, BaseCreateDto, BaseUpdateDto>
 {
-  constructor(private readonly iBaseService: IBaseService<T>) { }
+  constructor(private readonly iBaseService: IBaseService<T>) {}
 
   @Get()
   @ApiResponse({ status: 200, description: 'Ok' })
