@@ -86,7 +86,7 @@ export class AuthController {
       });
       return res.status(200).send(successLoginUser.userInfor);
     }
-    return res.status(500).send('Can not register new user');
+    return res.status(500).send('Login fail');
   }
 
   @Post('local/signup')

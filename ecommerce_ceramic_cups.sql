@@ -1,8 +1,9 @@
-CREATE TABLE `Customers` (
+CREATE TABLE `Users` (
   `id` UUID PRIMARY KEY DEFAULT (UUID()),
   `name` VARCHAR(255),
   `email` VARCHAR(255) UNIQUE,
-  `password_hash` VARCHAR(255),
+  `password` VARCHAR(255),
+  `refresh_token` VARCHAR(255),
   `is_admin` BOOLEAN DEFAULT false,
   `created_at` TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -27,7 +28,7 @@ CREATE TABLE `ProductTypes` (
 
 CREATE TABLE `Orders` (
   `id` UUID PRIMARY KEY DEFAULT (UUID()),
-  `customer_id` UUID,
+  `user_id` UUID,
   `status` ENUM('pending','completed','canceled') DEFAULT 'pending',
   `total_price` DECIMAL(10,2),
   `created_at` TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
@@ -43,15 +44,15 @@ CREATE TABLE `OrderItems` (
 
 ALTER TABLE `ProductTypes` ADD FOREIGN KEY (`product_id`) REFERENCES `Products` (`id`);
 
-ALTER TABLE `Orders` ADD FOREIGN KEY (`customer_id`) REFERENCES `Customers` (`id`);
+ALTER TABLE `Orders` ADD FOREIGN KEY (`user_id`) REFERENCES `Users` (`id`);
 
 ALTER TABLE `OrderItems` ADD FOREIGN KEY (`order_id`) REFERENCES `Orders` (`id`);
 
 ALTER TABLE `OrderItems` ADD FOREIGN KEY (`product_type_id`) REFERENCES `ProductTypes` (`id`);
 
 -- Insert the admin user
-INSERT INTO Customers (name, email, password_hash, is_admin) 
-VALUES ('Admin Seller', 'admin@example.com', 'hashed_password_here', TRUE);
+INSERT INTO Users (name, email, password, refresh_token, is_admin) 
+VALUES ('Admin Seller', 'admin@example.com', '$2a$12$eocRcg/LjH6AHQeigb.l2u3hjRjQ9L3aeRJGYF1OSFbG6OSDHWKLa', 'refresh_token', TRUE);
 
 -- Insert 10 products
 INSERT INTO Products (name, description) VALUES

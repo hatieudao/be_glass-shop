@@ -4,8 +4,8 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { API_SEND_MAIL_KEY, DOMAINNAME } from '../../constant';
 import { accessTokenSignConfig, refreshTokenSignConfig } from './tokenConfig';
-import { CustomersService } from './customers/customers.service';
-import { Customer } from './customers/schema/customer.schema';
+import { UsersService } from './users/users.service';
+import { User } from './users/schema/user.schema';
 import * as sendGrid from '@sendgrid/mail';
 import { generate, GenerateOptions } from 'randomstring';
 
@@ -15,7 +15,7 @@ interface TokenPayload {
   sub?: string;
 }
 
-const convertToUserInfor = (user: Customer) => ({
+const convertToUserInfor = (user: User) => ({
   email: user.email,
   firstName: user.name,
   lastName: user.name,
@@ -26,23 +26,17 @@ const convertToUserInfor = (user: Customer) => ({
 @Injectable()
 export class AuthService {
   constructor(
-    private customersService: CustomersService,
+    private usersService: UsersService,
     private jwtService: JwtService,
     private readonly config: ConfigService,
   ) {}
 
-  async validateUser(
-    email: string,
-    password: string,
-  ): Promise<Customer | null> {
-    return await this.customersService.validateCustomerPassword(
-      email,
-      password,
-    );
+  async validateUser(email: string, password: string): Promise<User | null> {
+    return await this.usersService.validateUserPassword(email, password);
   }
 
   async getCurrentUser(id: string) {
-    const user = await this.customersService.getItemById(id);
+    const user = await this.usersService.getItemById(id);
     if (!user) {
       throw new BadRequestException('User not found');
     }
@@ -50,21 +44,18 @@ export class AuthService {
   }
 
   async login(user: { email: string; password: string }) {
-    const result = await this.customersService.validateCustomerPassword(
+    const result = await this.usersService.validateUserPassword(
       user.email,
       user.password,
     );
     if (result) {
-      const thisUser = await this.customersService.getCustomerByEmail(
-        user.email,
-      );
+      const thisUser = await this.usersService.getUserByEmail(user.email);
       if (!thisUser) {
         throw new BadRequestException('User not found');
       }
       const payload = { email: thisUser.email, sub: thisUser.id };
-      const refreshToken = (
-        await this.customersService.getItemById(thisUser.id)
-      )?.refreshToken;
+      const refreshToken = (await this.usersService.getItemById(thisUser.id))
+        ?.refreshToken;
 
       if (refreshToken) {
         const decodedToken = this.tokenToPayload(refreshToken);
@@ -73,14 +64,14 @@ export class AuthService {
             payload,
             refreshTokenSignConfig,
           );
-          await this.customersService.updateCustomerRefreshToken(
+          await this.usersService.updateUserRefreshToken(
             thisUser.id,
             newRefreshToken,
           );
         }
       }
 
-      const currentUser = await this.customersService.getCustomerByEmail(
+      const currentUser = await this.usersService.getUserByEmail(
         thisUser.email,
       );
       return {
@@ -99,9 +90,7 @@ export class AuthService {
     firstName?: string;
     lastName?: string;
   }): Promise<any> {
-    const userFindByEmail = await this.customersService.getCustomerByEmail(
-      user.email,
-    );
+    const userFindByEmail = await this.usersService.getUserByEmail(user.email);
     if (userFindByEmail) {
       throw new BadRequestException('Email already exists');
     }
@@ -111,23 +100,20 @@ export class AuthService {
       );
     }
     const hash = await bcrypt.hash(user.password, 12);
-    const createUser = await this.customersService.create({
+    const createUser = await this.usersService.create({
       email: user.email,
       passwordHash: hash,
       refreshToken: '',
       name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
       isAdmin: false,
     });
-    const userId = await this.customersService.getCustomerIdByEmail(user.email);
+    const userId = await this.usersService.getUserIdByEmail(user.email);
     const payload = { email: user.email, sub: userId };
     const newRefreshToken = this.jwtService.sign(
       payload,
       refreshTokenSignConfig,
     );
-    await this.customersService.updateCustomerRefreshToken(
-      userId,
-      newRefreshToken,
-    );
+    await this.usersService.updateUserRefreshToken(userId, newRefreshToken);
     if (createUser) {
       return {
         access_token: this.jwtService.sign(payload, accessTokenSignConfig),
@@ -138,7 +124,7 @@ export class AuthService {
   }
 
   async refreshAccessToken(refreshToken: string, userId: string): Promise<any> {
-    const user = await this.customersService.getItemById(userId);
+    const user = await this.usersService.getItemById(userId);
     if (!user) {
       throw new BadRequestException('Can not get user with given userId');
     }
@@ -161,30 +147,23 @@ export class AuthService {
         'Can not read user from request which is required field',
       );
     }
-    const existedUser = await this.customersService.getCustomerByEmail(
-      req.user.email,
-    );
+    const existedUser = await this.usersService.getUserByEmail(req.user.email);
     if (!existedUser) {
       const hash = await bcrypt.hash('123456', 12);
-      const createUser = await this.customersService.create({
+      const createUser = await this.usersService.create({
         email: req.user.email,
         passwordHash: hash,
         refreshToken: '',
         name: '',
         isAdmin: false,
       });
-      const userId = await this.customersService.getCustomerIdByEmail(
-        req.user.email,
-      );
+      const userId = await this.usersService.getUserIdByEmail(req.user.email);
       const payload = { email: req.user.email, sub: userId };
       const newRefreshToken = this.jwtService.sign(
         payload,
         refreshTokenSignConfig,
       );
-      await this.customersService.updateCustomerRefreshToken(
-        userId,
-        newRefreshToken,
-      );
+      await this.usersService.updateUserRefreshToken(userId, newRefreshToken);
       if (createUser) {
         return {
           access_token: this.jwtService.sign(payload, accessTokenSignConfig),
@@ -196,9 +175,7 @@ export class AuthService {
     const currentRefreshToken = existedUser.refreshToken;
     if (currentRefreshToken) {
       const decodedToken = this.tokenToPayload(currentRefreshToken);
-      const userId = await this.customersService.getCustomerIdByEmail(
-        req.user.email,
-      );
+      const userId = await this.usersService.getUserIdByEmail(req.user.email);
       const payload = { sub: userId, email: req.user.email };
 
       if (decodedToken?.exp && Date.now() >= decodedToken.exp * 1000) {
@@ -206,13 +183,10 @@ export class AuthService {
           payload,
           refreshTokenSignConfig,
         );
-        await this.customersService.updateCustomerRefreshToken(
-          userId,
-          newRefreshToken,
-        );
+        await this.usersService.updateUserRefreshToken(userId, newRefreshToken);
       }
 
-      const currentUser = await this.customersService.getCustomerByEmail(
+      const currentUser = await this.usersService.getUserByEmail(
         req.user.email,
       );
       return {
@@ -233,7 +207,7 @@ export class AuthService {
       charset: 'alphanumeric',
     };
     const activateCode = generate(options);
-    const setResult = await this.customersService.setActivatedCode(
+    const setResult = await this.usersService.setActivatedCode(
       userInfo.sub,
       activateCode,
     );
@@ -291,7 +265,7 @@ export class AuthService {
         'Cannot read userId or activateCode from query params which is required field',
       );
     }
-    const userFindById = await this.customersService.getItemById(query.userId);
+    const userFindById = await this.usersService.getItemById(query.userId);
     if (!userFindById) {
       throw new BadRequestException(
         'Cannot find user with given userId taken from query params',
@@ -300,7 +274,7 @@ export class AuthService {
     if (userFindById.activateCode !== query.activateCode) {
       return false;
     }
-    await this.customersService.updateOne(query.userId, { isActivated: true });
+    await this.usersService.updateOne(query.userId, { isActivated: true });
     return true;
   }
 

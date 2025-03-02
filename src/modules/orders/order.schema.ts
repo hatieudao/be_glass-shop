@@ -6,7 +6,7 @@ import {
   ManyToOne,
   OneToMany,
 } from 'typeorm';
-import { Customer } from '../authentication/customers/schema/customer.schema';
+import { User } from '../authentication/users/schema/user.schema';
 import { OrderItem } from '../order-items/order-item.schema';
 
 export enum OrderStatus {
@@ -17,7 +17,7 @@ export enum OrderStatus {
 
 export interface IOrder {
   id: number;
-  customerId: number;
+  userId: number;
   status: OrderStatus;
   totalPrice: number;
   createdAt: Date;
@@ -28,8 +28,8 @@ export class Order implements IOrder {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'customer_id' })
-  customerId: number;
+  @Column({ name: 'user_id' })
+  userId: number;
 
   @Column({
     type: 'enum',
@@ -44,8 +44,8 @@ export class Order implements IOrder {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @ManyToOne(() => Customer, (customer) => customer.orders)
-  customer: Customer;
+  @ManyToOne(() => User, (user) => user.orders)
+  user: User;
 
   @OneToMany(() => OrderItem, (orderItem) => orderItem.order)
   orderItems: OrderItem[];

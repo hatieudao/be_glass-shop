@@ -1,22 +1,28 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsBoolean, IsOptional, IsEmail } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsBoolean,
+  IsOptional,
+  IsEmail,
+} from 'class-validator';
 
-export class UpdateCustomerDto {
+export class CreateUserDto {
   @IsString()
   @IsEmail()
-  @IsOptional()
+  @IsNotEmpty()
   @ApiProperty({ description: 'email', type: String })
-  email?: string;
+  email: string;
 
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   @ApiProperty({ description: 'password for hashing', type: String })
-  password?: string;
+  password: string;
 
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   @ApiProperty({ description: 'name', type: String })
-  name?: string;
+  name: string;
 
   @IsBoolean()
   @IsOptional()

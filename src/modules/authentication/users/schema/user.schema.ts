@@ -2,7 +2,7 @@ import { Entity, Column, OneToMany } from 'typeorm';
 import { Order } from '../../../orders/order.schema';
 import { BaseSchema } from '../../../../base/base.schema';
 
-export interface ICustomer {
+export interface IUser {
   id: string;
   name: string;
   email: string;
@@ -14,8 +14,8 @@ export interface ICustomer {
   created_at: Date;
 }
 
-@Entity('Customers')
-export class Customer extends BaseSchema implements ICustomer {
+@Entity('Users')
+export class User extends BaseSchema implements IUser {
   @Column()
   name: string;
 
@@ -37,6 +37,6 @@ export class Customer extends BaseSchema implements ICustomer {
   @Column({ name: 'is_activated', default: false })
   isActivated?: boolean;
 
-  @OneToMany(() => Order, (order) => order.customer)
+  @OneToMany(() => Order, (order) => order.user)
   orders: Order[];
 }
