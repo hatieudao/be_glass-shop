@@ -8,10 +8,26 @@ CREATE TABLE `Users` (
   `created_at` TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
 );
 
+CREATE TABLE `Address` (
+  `id` CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  `user_id` CHAR(36),
+  `address_line1` VARCHAR(255),
+  `address_line2` VARCHAR(255),
+  `city` VARCHAR(100),
+  `state` VARCHAR(100),
+  `postal_code` VARCHAR(20),
+  `country` VARCHAR(100),
+  `phone` VARCHAR(20),
+  `is_default` BOOLEAN DEFAULT false,
+  `address_name` ENUM('work', 'home', 'other') DEFAULT 'other',
+  `created_at` TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
+);
+
 CREATE TABLE `Products` (
   `id` CHAR(36) PRIMARY KEY DEFAULT (UUID()),
   `name` VARCHAR(255),
   `description` TEXT,
+  `is_deleted` BOOLEAN DEFAULT false,
   `created_at` TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
 );
 
@@ -26,9 +42,22 @@ CREATE TABLE `ProductTypes` (
   `created_at` TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
 );
 
+CREATE TABLE `Payment` (
+  `id` CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  `user_id` CHAR(36),
+  `payment_method` ENUM('credit_card', 'debit_card', 'bank_transfer', 'cash_on_delivery') NOT NULL,
+  `card_number` VARCHAR(255),
+  `card_holder_name` VARCHAR(255),
+  `expiry_date` VARCHAR(7),
+  `payment_status` ENUM('pending', 'completed', 'failed', 'refunded') DEFAULT 'pending',
+  `is_default` BOOLEAN DEFAULT false,
+  `created_at` TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
+);
+
 CREATE TABLE `Orders` (
   `id` CHAR(36) PRIMARY KEY DEFAULT (UUID()),
   `user_id` CHAR(36),
+  `payment_id` CHAR(36),
   `status` ENUM('pending','completed','canceled') DEFAULT 'pending',
   `total_price` DECIMAL(10,2),
   `created_at` TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
@@ -42,13 +71,41 @@ CREATE TABLE `OrderItems` (
   `price` DECIMAL(10,2)
 );
 
+CREATE TABLE Cart (
+  `id` CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  `user_id` CHAR(36),
+  `total_item` INT DEFAULT 0,
+  `created_at` TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
+);
+
+CREATE TABLE `CartItems` (
+  `id` CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  `cart_id` CHAR(36),
+  `product_type_id` CHAR(36),
+  `quantity` INT,
+  `price` DECIMAL(10,2),
+  `created_at` TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
+);
+
 ALTER TABLE `ProductTypes` ADD FOREIGN KEY (`product_id`) REFERENCES `Products` (`id`);
 
 ALTER TABLE `Orders` ADD FOREIGN KEY (`user_id`) REFERENCES `Users` (`id`);
 
+ALTER TABLE `Orders` ADD FOREIGN KEY (`payment_id`) REFERENCES `Payment` (`id`);
+
 ALTER TABLE `OrderItems` ADD FOREIGN KEY (`order_id`) REFERENCES `Orders` (`id`);
 
 ALTER TABLE `OrderItems` ADD FOREIGN KEY (`product_type_id`) REFERENCES `ProductTypes` (`id`);
+
+ALTER TABLE `Cart` ADD FOREIGN KEY (`user_id`) REFERENCES `Users` (`id`);
+
+ALTER TABLE `CartItems` ADD FOREIGN KEY (`product_type_id`) REFERENCES `ProductTypes` (`id`);
+
+ALTER TABLE `CartItems` ADD FOREIGN KEY (`cart_id`) REFERENCES `Cart` (`id`);
+
+ALTER TABLE `Address` ADD FOREIGN KEY (`user_id`) REFERENCES `Users` (`id`);
+
+ALTER TABLE `Payment` ADD FOREIGN KEY (`user_id`) REFERENCES `Users` (`id`);
 
 -- Insert the admin user
 INSERT INTO Users (name, email, password, refresh_token, is_admin) 

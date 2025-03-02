@@ -97,6 +97,7 @@ export class AuthController {
       properties: {
         email: { type: 'string', example: 'user@example.com' },
         password: { type: 'string', example: 'password123' },
+        confirmPassword: { type: 'string', example: 'password123' },
         firstName: { type: 'string', example: 'John' },
         lastName: { type: 'string', example: 'Doe' },
       },
