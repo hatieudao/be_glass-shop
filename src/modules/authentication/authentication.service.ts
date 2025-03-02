@@ -20,7 +20,6 @@ const convertToUserInfor = (user: User) => ({
   firstName: user.name,
   lastName: user.name,
   id: user.id,
-  isActivated: user.isActivated,
 });
 
 @Injectable()
@@ -102,7 +101,7 @@ export class AuthService {
     const hash = await bcrypt.hash(user.password, 12);
     const createUser = await this.usersService.create({
       email: user.email,
-      passwordHash: hash,
+      password: hash,
       refreshToken: '',
       name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
       isAdmin: false,
@@ -152,7 +151,7 @@ export class AuthService {
       const hash = await bcrypt.hash('123456', 12);
       const createUser = await this.usersService.create({
         email: req.user.email,
-        passwordHash: hash,
+        password: hash,
         refreshToken: '',
         name: '',
         isAdmin: false,
@@ -254,28 +253,6 @@ export class AuthService {
     } catch {
       throw new Error('Failed to send invitation email');
     }
-  }
-
-  async activateUser(query: {
-    userId: string;
-    activateCode: string;
-  }): Promise<boolean> {
-    if (!query.userId || !query.activateCode) {
-      throw new BadRequestException(
-        'Cannot read userId or activateCode from query params which is required field',
-      );
-    }
-    const userFindById = await this.usersService.getItemById(query.userId);
-    if (!userFindById) {
-      throw new BadRequestException(
-        'Cannot find user with given userId taken from query params',
-      );
-    }
-    if (userFindById.activateCode !== query.activateCode) {
-      return false;
-    }
-    await this.usersService.updateOne(query.userId, { isActivated: true });
-    return true;
   }
 
   getTokenFromRequestHeader(request: {

@@ -1,5 +1,5 @@
 CREATE TABLE `Users` (
-  `id` UUID PRIMARY KEY DEFAULT (UUID()),
+  `id` CHAR(36) PRIMARY KEY DEFAULT (UUID()),
   `name` VARCHAR(255),
   `email` VARCHAR(255) UNIQUE,
   `password` VARCHAR(255),
@@ -9,15 +9,15 @@ CREATE TABLE `Users` (
 );
 
 CREATE TABLE `Products` (
-  `id` UUID PRIMARY KEY DEFAULT (UUID()),
+  `id` CHAR(36) PRIMARY KEY DEFAULT (UUID()),
   `name` VARCHAR(255),
   `description` TEXT,
   `created_at` TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
 );
 
 CREATE TABLE `ProductTypes` (
-  `id` UUID PRIMARY KEY DEFAULT (UUID()),
-  `product_id` UUID,
+  `id` CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  `product_id` CHAR(36),
   `name` VARCHAR(255),
   `description` TEXT,
   `price` DECIMAL(10,2),
@@ -27,17 +27,17 @@ CREATE TABLE `ProductTypes` (
 );
 
 CREATE TABLE `Orders` (
-  `id` UUID PRIMARY KEY DEFAULT (UUID()),
-  `user_id` UUID,
+  `id` CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  `user_id` CHAR(36),
   `status` ENUM('pending','completed','canceled') DEFAULT 'pending',
   `total_price` DECIMAL(10,2),
   `created_at` TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
 );
 
 CREATE TABLE `OrderItems` (
-  `id` UUID PRIMARY KEY DEFAULT (UUID()),
-  `order_id` UUID,
-  `product_type_id` UUID,
+  `id` CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  `order_id` CHAR(36),
+  `product_type_id` CHAR(36),
   `quantity` INT,
   `price` DECIMAL(10,2)
 );

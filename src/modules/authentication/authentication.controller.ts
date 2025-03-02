@@ -258,23 +258,6 @@ export class AuthController {
     );
   }
 
-  @Get('activateAccount')
-  @ApiOperation({ summary: 'Activate user account' })
-  @ApiQuery({
-    name: 'token',
-    type: 'string',
-    description: 'Account activation token',
-    required: true,
-  })
-  @ApiResponse({ status: 200, description: 'Account activated successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid activation token' })
-  async activateAccount(@Request() req: any, @Query() query): Promise<any> {
-    const result = await this.authservice.activateUser(query);
-    if (result) {
-      return 'Your account has been activated!';
-    } else return result;
-  }
-
   @Get('/current-user')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

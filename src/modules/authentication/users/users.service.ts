@@ -29,7 +29,7 @@ export class UsersService extends BaseService<User> {
       );
     }
     const user = await this.getUserByEmail(email);
-    if (user && (await bcrypt.compare(password, user.passwordHash))) {
+    if (user && (await bcrypt.compare(password, user.password))) {
       return user;
     }
     return null;

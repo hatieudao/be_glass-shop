@@ -6,11 +6,9 @@ export interface IUser {
   id: string;
   name: string;
   email: string;
-  passwordHash: string;
+  password: string;
   isAdmin: boolean;
   refreshToken?: string;
-  activateCode?: string;
-  isActivated?: boolean;
   created_at: Date;
 }
 
@@ -22,20 +20,14 @@ export class User extends BaseSchema implements IUser {
   @Column({ unique: true })
   email: string;
 
-  @Column({ name: 'password_hash' })
-  passwordHash: string;
+  @Column({ name: 'password' })
+  password: string;
 
   @Column({ name: 'is_admin', default: false })
   isAdmin: boolean;
 
   @Column({ name: 'refresh_token', nullable: true })
   refreshToken?: string;
-
-  @Column({ name: 'activate_code', nullable: true })
-  activateCode?: string;
-
-  @Column({ name: 'is_activated', default: false })
-  isActivated?: boolean;
 
   @OneToMany(() => Order, (order) => order.user)
   orders: Order[];
