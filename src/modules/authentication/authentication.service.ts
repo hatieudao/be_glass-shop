@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { API_SEND_MAIL_KEY, DOMAINNAME } from '../../constant';
-import { accessTokenSignConfig, refreshTokenSignConfig } from './tokenConfig';
+import { getJwtConfig } from './tokenConfig';
 import { UsersService } from './users/users.service';
 import { User } from './users/schema/user.schema';
 import * as sendGrid from '@sendgrid/mail';
@@ -24,11 +24,19 @@ const convertToUserInfor = (user: User) => ({
 
 @Injectable()
 export class AuthService {
+  private accessTokenSignConfig;
+  private refreshTokenSignConfig;
+
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
     private readonly config: ConfigService,
-  ) {}
+  ) {
+    const { accessTokenSignConfig, refreshTokenSignConfig } =
+      getJwtConfig(config);
+    this.accessTokenSignConfig = accessTokenSignConfig;
+    this.refreshTokenSignConfig = refreshTokenSignConfig;
+  }
 
   async validateUser(email: string, password: string): Promise<User | null> {
     return await this.usersService.validateUserPassword(email, password);
@@ -61,7 +69,7 @@ export class AuthService {
         if (decodedToken?.exp && Date.now() >= decodedToken.exp * 1000) {
           const newRefreshToken = this.jwtService.sign(
             payload,
-            refreshTokenSignConfig,
+            this.refreshTokenSignConfig,
           );
           await this.usersService.updateUserRefreshToken(
             thisUser.id,
@@ -74,7 +82,7 @@ export class AuthService {
         thisUser.email,
       );
       return {
-        access_token: this.jwtService.sign(payload, accessTokenSignConfig),
+        access_token: this.jwtService.sign(payload, this.accessTokenSignConfig),
         refresh_token: currentUser?.refreshToken,
         userInfor: convertToUserInfor(thisUser),
       };
@@ -110,12 +118,12 @@ export class AuthService {
     const payload = { email: user.email, sub: userId };
     const newRefreshToken = this.jwtService.sign(
       payload,
-      refreshTokenSignConfig,
+      this.refreshTokenSignConfig,
     );
     await this.usersService.updateUserRefreshToken(userId, newRefreshToken);
     if (createUser) {
       return {
-        access_token: this.jwtService.sign(payload, accessTokenSignConfig),
+        access_token: this.jwtService.sign(payload, this.accessTokenSignConfig),
         refresh_token: newRefreshToken,
       };
     }
@@ -131,7 +139,7 @@ export class AuthService {
       const payload = { email: user.email, sub: userId };
       const newAccessToken = this.jwtService.sign(
         payload,
-        accessTokenSignConfig,
+        this.accessTokenSignConfig,
       );
       return {
         access_token: newAccessToken,
@@ -160,12 +168,15 @@ export class AuthService {
       const payload = { email: req.user.email, sub: userId };
       const newRefreshToken = this.jwtService.sign(
         payload,
-        refreshTokenSignConfig,
+        this.refreshTokenSignConfig,
       );
       await this.usersService.updateUserRefreshToken(userId, newRefreshToken);
       if (createUser) {
         return {
-          access_token: this.jwtService.sign(payload, accessTokenSignConfig),
+          access_token: this.jwtService.sign(
+            payload,
+            this.accessTokenSignConfig,
+          ),
           refresh_token: newRefreshToken,
         };
       }
@@ -180,7 +191,7 @@ export class AuthService {
       if (decodedToken?.exp && Date.now() >= decodedToken.exp * 1000) {
         const newRefreshToken = this.jwtService.sign(
           payload,
-          refreshTokenSignConfig,
+          this.refreshTokenSignConfig,
         );
         await this.usersService.updateUserRefreshToken(userId, newRefreshToken);
       }
@@ -189,7 +200,7 @@ export class AuthService {
         req.user.email,
       );
       return {
-        access_token: this.jwtService.sign(payload, accessTokenSignConfig),
+        access_token: this.jwtService.sign(payload, this.accessTokenSignConfig),
         refresh_token: currentUser?.refreshToken,
       };
     }
