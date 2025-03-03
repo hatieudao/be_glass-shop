@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 
 // Default values if not provided in environment variables
 // 1 hour for access token (in seconds)
-const DEFAULT_ACCESS_TOKEN_EXPIRY = 5;
+const DEFAULT_ACCESS_TOKEN_EXPIRY = 60 * 60;
 // 30 days for refresh token (in seconds)
 const DEFAULT_REFRESH_TOKEN_EXPIRY = 60 * 60 * 24 * 30;
 

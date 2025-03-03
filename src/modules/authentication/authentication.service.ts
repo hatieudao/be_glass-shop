@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -45,9 +49,9 @@ export class AuthService {
   async getCurrentUser(id: string) {
     const user = await this.usersService.getItemById(id);
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new UnauthorizedException('User not found');
     }
-    return convertToUserInfor(user);
+    return { data: convertToUserInfor(user) };
   }
 
   async login(user: { email: string; password: string }) {
@@ -56,17 +60,19 @@ export class AuthService {
       user.password,
     );
     if (result) {
-      const thisUser = await this.usersService.getUserByEmail(user.email);
+      const thisUser = result;
       if (!thisUser) {
         throw new BadRequestException('User not found');
       }
       const payload = { email: thisUser.email, sub: thisUser.id };
-      const refreshToken = (await this.usersService.getItemById(thisUser.id))
-        ?.refreshToken;
+      const refreshToken = thisUser.refreshToken;
 
       if (refreshToken) {
         const decodedToken = this.tokenToPayload(refreshToken);
-        if (decodedToken?.exp && Date.now() >= decodedToken.exp * 1000) {
+        if (
+          !decodedToken ||
+          (decodedToken?.exp && Date.now() >= decodedToken.exp * 1000)
+        ) {
           const newRefreshToken = this.jwtService.sign(
             payload,
             this.refreshTokenSignConfig,

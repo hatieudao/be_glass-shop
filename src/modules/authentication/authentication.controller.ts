@@ -1,31 +1,29 @@
-import { ConfigService } from '@nestjs/config';
-import { AuthGuard } from '@nestjs/passport';
-import { JwtRefreshAuthGuard } from '../../common/guards/jwt-refresh-auth.guard';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import {
+  BadRequestException,
+  Body,
   Controller,
+  Get,
+  Headers,
   Post,
-  UseGuards,
   Request,
   Response,
-  Get,
-  Body,
-  Query,
-  Headers,
-  BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
-import { REDIRECTPAGE } from '../../constant';
-import { AuthService } from './authentication.service';
+import { ConfigService } from '@nestjs/config';
+import { AuthGuard } from '@nestjs/passport';
 import {
-  ApiTags,
+  ApiBearerAuth,
+  ApiBody,
+  ApiHeader,
   ApiOperation,
   ApiResponse,
-  ApiBody,
-  ApiBearerAuth,
-  ApiQuery,
-  ApiHeader,
+  ApiTags,
 } from '@nestjs/swagger';
 import { GetCurrentUserId } from '../../common/decorators/get-current-user-id.decorator';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { JwtRefreshAuthGuard } from '../../common/guards/jwt-refresh-auth.guard';
+import { REDIRECTPAGE } from '../../constant';
+import { AuthService } from './authentication.service';
 
 interface TokenPayload {
   exp?: number;
@@ -259,8 +257,8 @@ export class AuthController {
     );
   }
 
-  @Get('/current-user')
   @UseGuards(JwtAuthGuard)
+  @Get('/me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user information' })
   @ApiResponse({
@@ -268,7 +266,16 @@ export class AuthController {
     description: 'Current user information retrieved successfully',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getCurrentUser(@GetCurrentUserId() userId) {
-    return await this.authservice.getCurrentUser(userId);
+  async getMe(@GetCurrentUserId() userId) {
+    if (!userId) {
+      return { data: null };
+    }
+
+    const user = await this.authservice.getCurrentUser(userId);
+    if (!user) {
+      return { data: null };
+    }
+
+    return { data: user };
   }
 }

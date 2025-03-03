@@ -3,6 +3,7 @@ import {
   Injectable,
   BadGatewayException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   Repository,
@@ -77,6 +78,9 @@ export class BaseRepository<T extends BaseSchema> {
 
   async findById(id: string): Promise<T> {
     try {
+      if (!id) {
+        throw new BadRequestException('ID must be provided');
+      }
       const item = await this.repository.findOne({
         where: { id: id } as unknown as FindOptionsWhere<T>,
       });
